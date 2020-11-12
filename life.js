@@ -1,79 +1,95 @@
-// Life
+// Game of Life
 // © 2015-2020 Michael Hamilton
 
-const c = document.getElementById('canvas');//canvas element
-const ctx = c.getContext('2d'); //canvas context
-let cells = []; //arr
-let h = w = 12; //dimensions of each cell (in px)
-let state = false; //current state of game (draw or update)
-let steps = 0; //current number of cycles
-let speed = 10; //current number of cycles
+const c = document.getElementById('canvas');// canvas element
+const ctx = c.getContext('2d'); // canvas context
+let cells = []; // all the cells in the simulation
+let isRunning = false; // running state of the simulation
+let isUpdating = false; // simulation is updating
+let updateTimeout = false; // reference to timeout between updates
+let h = w = 12; // dimensions of each cell (in px)
+let delay = 10; // current number of cycles
+let steps = 0; // current number of cycles
 
-c.height = window.innerHeight;
-c.width = window.innerWidth;
-
+// Initializes grid cells based on size of window
 const init = () => {
-  for (let i = 0; i < c.height / h; i++) {
-    cells[i] = []
-    for(let j = 0; j < c.width / w; j++) {
-      cells[i][j] = 0;
+  for (let y = 0; y < c.height / h; y++) {
+    cells[y] = []
+    for (let x = 0; x < c.width / w; x++) {
+      cells[y][x] = 0;
     }
   }
-
-  draw();
 }
 
+// Handle update between generations
 const update = () => {
-  //Temporary array for state of cells in next cycle
-  const result = [];
+  const nextGeneration = [];
 
-  const val = (x, y) => cells[x] && cells[x][y];
+  const cellValueAtCoordinate = (x, y) => cells[x] && cells[x][y];
 
-  //Returns amount of neighbor cells that are active
+  // Returns number of active neighbor cells
   const check = (x, y) => {
-    let amount = 0;
+    let active = 0;
 
-    if(val(x-1, y-1)) amount++;
-    if(val(x, y-1)) amount++;
-    if(val(x+1, y-1)) amount++;
-    if(val(x-1, y)) amount++;
-    if(val(x+1, y)) amount++;
-    if(val(x-1, y+1)) amount++;
-    if(val(x, y+1)) amount++;
-    if(val(x+1, y+1)) amount++;
+    if (cellValueAtCoordinate(x-1, y-1)) active++;
+    if (cellValueAtCoordinate(x, y-1)) active++;
+    if (cellValueAtCoordinate(x+1, y-1)) active++;
+    if (cellValueAtCoordinate(x-1, y)) active++;
+    if (cellValueAtCoordinate(x+1, y)) active++;
+    if (cellValueAtCoordinate(x-1, y+1)) active++;
+    if (cellValueAtCoordinate(x, y+1)) active++;
+    if (cellValueAtCoordinate(x+1, y+1)) active++;
 
-    return amount;
+    return active;
   }
 
-  //Check each cell and update the result array
+  // Check each cell and update the result array
   cells.forEach((row, x) => {
-    result[x] = [];
+    nextGeneration[x] = [];
+
     row.forEach((cell, y) => {
       let neighbors = check(x, y);
+
       if (cell) {
         if (neighbors === 2 || neighbors === 3) {
-          result[x][y] = 1;
+          nextGeneration[x][y] = 1;
         }
         else {
-          result[x][y] = 0;
+          nextGeneration[x][y] = 0;
         }
       }
       else {
         if (neighbors === 3) {
-          result[x][y] = 1;
+          nextGeneration[x][y] = 1;
         }
-        else result[x][y] = 0;
+        else nextGeneration[x][y] = 0;
       }
     });
   });
 
-  //Copy temporary array back to cells
-  cells = result;
-
-  steps ++;
-  draw();
+  // Copy temporary array back to cells
+  cells = [...nextGeneration];
 }
 
+// Draw title, instructions, etc
+const drawText = () => {
+  ctx.fillStyle = 'black';
+  ctx.font = '24px sans-serif';
+  ctx.fillText('Game of Life', 10, 20);
+  ctx.font = "14px sans-serif";
+  ctx.fillText('click cells to toggle on and off', 10, 45);
+  ctx.fillText('space to play/pause', 10, 65);
+  ctx.fillText('up/down to change delay between generations', 10, 85);
+  ctx.fillText('R to reset', 10, 105);
+
+  ctx.fillRect(c.width - 200,0,c.width, 50);
+  ctx.fillStyle = 'white';
+  ctx.font = '18px sans-serif';
+  ctx.fillText(`Generation: ${steps}`, c.width - 190, 18);
+  ctx.fillText(`Delay: ${delay}`, c.width - 190, 38);
+}
+
+// Main loop
 const draw = () => {
   //Clear last frame
   ctx.clearRect(0,0,c.width,c.height);
@@ -86,56 +102,62 @@ const draw = () => {
     });
   });
 
-  //Update step counter
-  ctx.fillStyle = 'black';
-  ctx.fillRect(c.width - 200,0,c.width, 24);
-  ctx.font = '18px sans-serif';
-  ctx.fillText(`Space to play/pause`, 10, 20);
-  ctx.fillText(`R to reset`, 10, 40);
-  ctx.fillStyle = 'white';
-  ctx.font = '18px sans-serif';
-  ctx.fillText(`Generation: ${steps}`, c.width - 190, 18);
+  drawText();
 
-  //Update every n number of ms as defined by 'speed'
-  setTimeout(() => {
-    if (state) {
+  // Update every 'delay' ms
+  if (isRunning && !isUpdating) {
+    isUpdating = true;
+    updateTimeout = setTimeout(() => {
+      isUpdating = false;
       update();
-    }
-    else {
-      draw();
-    }
-  }, speed);
+      steps++;
+    }, delay);
+  }
+
+  requestAnimationFrame(draw);
 }
 
-//Toggle the cell at cursor position when canvas is clicked
-c.addEventListener('mousedown', function(e) {
+// Reset simulation
+const handleReset = () => {
+  clearTimeout(updateTimeout);
+  c.height = window.innerHeight;
+  c.width = window.innerWidth;
+  isRunning = false;
+  isUpdating = false;
+  steps = 0;
+  init();
+};
+
+// Toggle the cell at cursor position when canvas is clicked
+c.addEventListener('mousedown', (e) => {
   const x = Math.floor(e.offsetX/w);
   const y = Math.floor(e.offsetY/h);
   cells[y][x] = cells[y][x] ? 0 : 1;
 });
 
-//Start game when 'space' is pressed
-window.addEventListener('keydown', function(e) {
-  console.log(e.code);
+// Handle keyboard events
+window.addEventListener('keydown', (e) => {
   switch(e.code) {
     case 'Space':
-      state = !state;
+      isRunning = !isRunning;
       break;
     case 'KeyR':
-      state = false;
-      steps = 0;
-      init();
+      handleReset();
+      break;
+    case 'ArrowUp':
+      delay += 1;
+      break;
+    case 'ArrowDown':
+      delay -= delay > 0 ? 1 : 0;
       break;
   }
 });
 
-window.addEventListener('resize', () => {
-  c.height = window.innerHeight;
-  c.width = window.innerWidth;
+// Reset simulation when window is resized
+window.addEventListener('resize', handleReset);
 
-  state = false;
-  steps = 0;
-  init();
-});
+c.height = window.innerHeight;
+c.width = window.innerWidth;
 
 init();
+draw();
