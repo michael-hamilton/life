@@ -1,13 +1,15 @@
 // Game of Life
-// © 2015-2020 Michael Hamilton
+// © 2015-2023 Michael Hamilton
 
 const c = document.getElementById('canvas');// canvas element
 const ctx = c.getContext('2d'); // canvas context
 let cells = []; // all the cells in the simulation
 let isRunning = false; // running state of the simulation
+let isMouseDown = false; // status of mousebutton press
+let clickedCellState = 0; // status of first cell clicked
 let isUpdating = false; // simulation is updating
 let updateTimeout = false; // reference to timeout between updates
-let h = w = 12; // dimensions of each cell (in px)
+let h = w = 10; // dimensions of each cell (in px)
 let delay = 10; // current number of cycles
 let steps = 0; // current number of cycles
 
@@ -28,17 +30,16 @@ const update = () => {
   const cellValueAtCoordinate = (x, y) => cells[x] && cells[x][y];
 
   // Returns number of active neighbor cells
-  const check = (x, y) => {
+  const countActiveNeighbors = (x, y) => {
     let active = 0;
 
-    if (cellValueAtCoordinate(x-1, y-1)) active++;
-    if (cellValueAtCoordinate(x, y-1)) active++;
-    if (cellValueAtCoordinate(x+1, y-1)) active++;
-    if (cellValueAtCoordinate(x-1, y)) active++;
-    if (cellValueAtCoordinate(x+1, y)) active++;
-    if (cellValueAtCoordinate(x-1, y+1)) active++;
-    if (cellValueAtCoordinate(x, y+1)) active++;
-    if (cellValueAtCoordinate(x+1, y+1)) active++;
+    for(let iy = y-1; iy <= y+1; iy++) {
+      for(let ix = x-1; ix <= x+1; ix++) {
+        if(!(ix === x && iy === y) && cellValueAtCoordinate(ix, iy)) {
+          active++;
+        }
+      }
+    }
 
     return active;
   }
@@ -48,7 +49,7 @@ const update = () => {
     nextGeneration[x] = [];
 
     row.forEach((cell, y) => {
-      let neighbors = check(x, y);
+      let neighbors = countActiveNeighbors(x, y);
 
       if (cell) {
         if (neighbors === 2 || neighbors === 3) {
@@ -73,7 +74,7 @@ const update = () => {
 
 // Draw title, instructions, etc
 const drawText = () => {
-  ctx.fillStyle = 'black';
+  ctx.fillStyle = '#fff';
   ctx.font = '24px sans-serif';
   ctx.fillText('Game of Life', 10, 20);
   ctx.font = "14px sans-serif";
@@ -81,9 +82,9 @@ const drawText = () => {
   ctx.fillText('space to play/pause', 10, 65);
   ctx.fillText('up/down to change delay between generations', 10, 85);
   ctx.fillText('R to reset', 10, 105);
-
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.fillRect(c.width - 200,0,c.width, 50);
-  ctx.fillStyle = 'white';
+  ctx.fillStyle = 'black';
   ctx.font = '18px sans-serif';
   ctx.fillText(`Generation: ${steps}`, c.width - 190, 18);
   ctx.fillText(`Delay: ${delay}`, c.width - 190, 38);
@@ -97,7 +98,7 @@ const draw = () => {
   //Draw the cells in the current cycle
   cells.forEach((row, y) => {
     row.forEach((cell, x) => {
-      ctx.fillStyle = cell ? "#0a90ff" : '#d7d7d7';
+      ctx.fillStyle = cell ? "#4dc74a" : '#222222';
       ctx.fillRect(x*w+1,y*h+1,w-1,h-1);
     });
   });
@@ -128,11 +129,27 @@ const handleReset = () => {
   init();
 };
 
-// Toggle the cell at cursor position when canvas is clicked
+// Handle when mouse is pressed
 c.addEventListener('mousedown', (e) => {
-  const x = Math.floor(e.offsetX/w);
-  const y = Math.floor(e.offsetY/h);
+  const x = Math.floor(e.offsetX / w);
+  const y = Math.floor(e.offsetY / h);
+  clickedCellState = !cells[y][x];
   cells[y][x] = cells[y][x] ? 0 : 1;
+  isMouseDown = true;
+});
+
+// Handle when mouse is no longer pressed
+c.addEventListener('mouseup', (e) => {
+  isMouseDown = false;
+});
+
+// Toggle the cell at cursor position when canvas is clicked
+c.addEventListener('mousemove', (e) => {
+  if(isMouseDown) {
+    const x = Math.floor(e.offsetX / w);
+    const y = Math.floor(e.offsetY / h);
+    cells[y][x] = clickedCellState;
+  }
 });
 
 // Handle keyboard events
