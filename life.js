@@ -9,7 +9,8 @@ let isMouseDown = false; // status of mousebutton press
 let clickedCellState = 0; // status of first cell clicked
 let isUpdating = false; // simulation is updating
 let updateTimeout = false; // reference to timeout between updates
-let h = w = 10; // dimensions of each cell (in px)
+let h = 10; // h dimension of each cell (in px)
+let w = 10; // w dimension of each cell (in px)
 let delay = 10; // current number of cycles
 let steps = 0; // current number of cycles
 
@@ -72,22 +73,10 @@ const update = () => {
   cells = [...nextGeneration];
 }
 
-// Draw title, instructions, etc
-const drawText = () => {
-  ctx.fillStyle = '#fff';
-  ctx.font = '24px sans-serif';
-  ctx.fillText('Game of Life', 10, 20);
-  ctx.font = "14px sans-serif";
-  ctx.fillText('click cells to toggle on and off', 10, 45);
-  ctx.fillText('space to play/pause', 10, 65);
-  ctx.fillText('up/down to change delay between generations', 10, 85);
-  ctx.fillText('R to reset', 10, 105);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-  ctx.fillRect(c.width - 200,0,c.width, 50);
-  ctx.fillStyle = 'black';
-  ctx.font = '18px sans-serif';
-  ctx.fillText(`Generation: ${steps}`, c.width - 190, 18);
-  ctx.fillText(`Delay: ${delay}`, c.width - 190, 38);
+// Update readout elements
+const updateReadout = () => {
+  updateInfoParameterValue('delay', delay);
+  updateInfoParameterValue('generation', steps);
 }
 
 // Main loop
@@ -103,7 +92,7 @@ const draw = () => {
     });
   });
 
-  drawText();
+  updateReadout();
 
   // Update every 'delay' ms
   if (isRunning && !isUpdating) {
@@ -121,12 +110,13 @@ const draw = () => {
 // Reset simulation
 const handleReset = () => {
   clearTimeout(updateTimeout);
-  c.height = window.innerHeight;
-  c.width = window.innerWidth;
+  c.height = document.getElementById('canvas-wrapper').clientHeight;
+  c.width = document.getElementById('canvas-wrapper').clientWidth;
   isRunning = false;
   isUpdating = false;
   steps = 0;
   init();
+  updateReadout();
 };
 
 // Handle when mouse is pressed
@@ -170,11 +160,31 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// Returns the DOM element with the provided ID
+export const $ = (id) => document.getElementById(id);
+
+// Returns children of the provided parent element with a given name
+export const getChildElementsByName = (parent, name) => parent.querySelector(`span[name=${name}]`);
+
+// Adds an updatable readout parameter to the info panel
+const addInfoReadoutParameterItem = (name, prettyName = name) => {
+  $('parameter-readout').insertAdjacentHTML('beforeend', `<p name="param-${name}">${prettyName}: <span name="${name}-value"></span></p>`);
+}
+
+// Updates the readout parameter of the given name with the provided value
+const updateInfoParameterValue = (name, value) => {
+  const element = getChildElementsByName($('parameter-readout'), `${name}-value`);
+
+  element.innerHTML = value;
+}
+
 // Reset simulation when window is resized
 window.addEventListener('resize', handleReset);
 
-c.height = window.innerHeight;
-c.width = window.innerWidth;
+addInfoReadoutParameterItem('generation', 'Generation');
+addInfoReadoutParameterItem('delay', 'Delay');
+
+handleReset();
 
 init();
 draw();

@@ -6,7 +6,23 @@
 	</head>
 
 	<body>
-		<canvas id="canvas" width="640" height="480"></canvas>
-		<script src="./life.js"></script>
+		<div class="page-wrapper">
+			<div class="sidebar">
+				<div>
+					<h1>Game of Life</h1>
+					<p><b>Click</b> cells to toggle on/off</p>
+					<p>Press <b>space</b> to start/stop simulation</p>
+					<p>Press <b>up</b> or <i>down</i> to change the delay between generations (ms)</p>
+					<p>Press <b>R</b> to reset</p>
+				</div>
+
+				<div class="readout" id="parameter-readout"></div>
+			</div>
+
+			<div class="canvas-wrapper" id="canvas-wrapper">
+				<canvas id="canvas"></canvas>
+			</div>
+		</div>
+	<script src="./life.js" type="module"></script>
 	</body>
 </html>

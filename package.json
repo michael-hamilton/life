@@ -1,7 +1,6 @@
 {
   "name": "life",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "https://github.com/michael-hamilton/life.git",
   "author": "Michael Hamilton <michaelhamilton626@gmail.com>",
   "license": "MIT",
@@ -10,8 +9,9 @@
     "dev": "parcel life.html"
   },
   "devDependencies": {
+    "@parcel/transformer-sass": "^2.8.2",
+    "parcel": "^2.8.0",
     "parcel-plugin-inliner": "^1.0.14",
-    "parcel-bundler": "^1.12.4",
-    "sass": "^1.29.0"
+    "process": "^0.11.10"
   }
 }

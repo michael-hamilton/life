@@ -4,9 +4,48 @@
 }
 
 html, body {
+  height: 100%;
   overflow: hidden;
+  width: 100%;
 }
 
-#canvas {
-  background-color: #3f3f3f;
+.page-wrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+
+  .sidebar {
+    background-color: #1a1a1a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+    font-weight: 100;
+    min-width: 200px;
+    max-width: 200px;
+    padding: 10px;
+
+    h1 {
+      border-bottom: 1px solid #373737;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 10px;
+    }
+
+    .readout {
+      border-top: 1px solid #373737;
+      margin-top: auto;
+      padding-top: 10px;
+    }
+  }
+
+  .canvas-wrapper {
+    flex: 4;
+
+    #canvas {
+      background-color: #3f3f3f;
+    }
+  }
 }
